@@ -1,0 +1,54 @@
+Build a complete 3D bus driving game called "Bus Rush 3D" as a SINGLE self-contained HTML file (HTML + CSS + JavaScript all in one file, no build tools, no external project structure). Use Three.js loaded from a CDN (e.g. https://cdnjs.cloudflare.com/ajax/libs/three.js/...). The game must run directly in a mobile browser when the file is opened.
+
+GAME CONCEPT
+A third-person 3D city bus simulator. The player drives a bus around a simple grid-based city, stops at bus stops along a fixed cyclic route, automatically picks up and drops off passengers, and earns money/score for each passenger transported. No fail state — it's an endless relaxed loop, not a timed challenge.
+
+WORLD / MAP
+- A simple grid-based city: roads forming a 3x3 block grid (horizontal and vertical road strips, road width ~12-14 units, with dashed lane markings).
+- City blocks filled with simple low-poly buildings (boxes with varied height/width/color, urban gray/beige/blue tones) acting as obstacles.
+- A few simple trees (cone + cylinder) and streetlights for atmosphere.
+- A flat ground plane (grass/sidewalk color) outside the road areas, with invisible boundary walls so the bus can't drive off the map.
+- 6 bus stops placed at distinct points along the roads, each marked with: a small sign post (pole + flat colored sign), a painted stop zone rectangle on the road, and a label (Stop A, B, C, D, E, F). Stops are visited in a fixed cyclic order (A→B→C→D→E→F→A...).
+
+BUS MODEL & PHYSICS
+- Build the bus from simple Three.js primitives (boxes for chassis/body, darker boxes for windows, cylinders for wheels) — no external 3D model files needed. Give it a recognizable bus livery color (e.g. amber/yellow with white stripe).
+- Simple arcade-style car physics: acceleration when gas is held, deceleration/friction when released, stronger deceleration when brake is held, steering turns the bus heading at a rate proportional to current speed (slower turning at high speed). Max speed should feel reasonable for a city bus (~60-80 km/h equivalent).
+- Allow slow reverse: if the bus is stopped and brake is held, it moves backward slowly.
+- Simple collision detection against buildings: if the bus's bounding circle overlaps a building's bounding box, stop/bounce the bus and sharply reduce its speed (no destruction, just a soft "thud" stop).
+
+CAMERA
+Third-person chase camera that smoothly follows behind and slightly above the bus, looking toward the direction of travel. Use smooth interpolation (lerp) so the camera doesn't feel jittery.
+
+GAMEPLAY LOOP
+- The next target stop is always highlighted (e.g. a glowing ring/beacon above the correct stop sign).
+- When the bus arrives within a trigger radius (~8 units) of the target stop AND its speed drops below a low threshold for about 1 second, treat it as "docked": instantly drop off any onboard passengers whose destination is this stop (add money to score), then pick up new waiting passengers (up to the bus capacity) whose destination is the next stop in the route.
+- Bus capacity: ~24 passengers. Money reward: a fixed amount per passenger transported (e.g. $5 each).
+- After docking, automatically advance the target to the next stop in the cyclic order.
+
+CONTROLS (mobile-first, touch-based, but also support keyboard for desktop testing)
+- On-screen touch controls fixed to the bottom of the screen:
+  - Bottom-left: two large buttons for steering left and right (press-and-hold while turning).
+  - Bottom-right: a large green "GAS" button and a large red "BRAKE" button.
+- Keyboard fallback: Arrow keys or WASD (Up/W = gas, Down/S = brake/reverse, Left/A and Right/D = steer).
+- Controls must work with touchstart/touchend events (not just click) for responsive mobile feel, and prevent default scrolling/zooming on touch.
+
+HUD (overlay UI on top of the 3D canvas, using semi-transparent dark glassy panels with rounded corners and a thin amber border so the 3D scene is still visible underneath)
+- Top bar: current money/score (gold/yellow number), current passenger load shown as "X / 24", and the name of the current target stop with a small directional compass arrow that rotates to point toward the target stop relative to the bus's current heading, plus distance in meters.
+- A horizontal row of 6 small dot/icons representing stops A-F as a transit-line diagram; the current target stop dot should pulse/glow amber, and stops already visited this lap can appear slightly dimmed/checked.
+- Bottom-right: a simple digital speedometer showing current speed in km/h.
+- Briefly show a small toast/banner message when passengers board or alight (e.g. "+3 passengers boarded", "+$15 earned") that fades out after ~2 seconds.
+
+VISUAL / DESIGN DIRECTION
+- Color palette: dark asphalt UI panels (#14171A semi-transparent), amber/gold accent (#FFB100) for highlights and the bus livery, gold (#FFD200) for money numbers, green (#36D399) for the gas button, red (#FF4655) for the brake button, soft sky-blue gradient background (#7EC8E3 to #DCEEF5) for the sky.
+- HUD typography: a clean, slightly condensed sans-serif for labels, with a bold tabular/monospaced style for numeric readouts (speed, money) to give a dashboard/gauge feel.
+- Keep the HUD minimal and uncluttered — don't cover more than necessary of the 3D view, since the player needs visibility while driving.
+- Make sure the canvas and all UI elements are fully responsive and fill the viewport on mobile screens of any aspect ratio, and lock orientation handling isn't required but layout should still work in portrait mode.
+
+TECHNICAL REQUIREMENTS
+- Everything in one .html file: inline <style> and inline <script>, Three.js imported via CDN script tag.
+- Use requestAnimationFrame for the game loop with proper deltaTime calculation so speed feels consistent across devices/frame rates.
+- Code should be reasonably organized with clear comments separating: scene setup, world/city generation, bus creation, physics/controls update, camera update, game logic (stops/passengers/scoring), and HUD rendering/update.
+- No external assets (images, 3D models, audio files) required — everything built procedurally with Three.js geometries and materials, and HTML/CSS for the UI. Optional: simple Web Audio API beep sounds for boarding/scoring events, but not required.
+- Make sure the game starts immediately on page load with a simple "Tap to Start" overlay first (to handle mobile autoplay/audio restrictions if sound is added).
+
+Deliver the complete, working code in a single HTML file named bus-rush-3d.html.
