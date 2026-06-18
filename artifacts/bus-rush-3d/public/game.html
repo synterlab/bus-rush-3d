@@ -401,11 +401,22 @@ canvas#c{position:fixed;inset:0;display:block}
     <span class="key">A D / ← → Steer</span>
   </div>
 
-  <button class="start-btn" id="start">TAP TO START</button>
+  <button class="start-btn" id="start" onclick="window.__startGame&&window.__startGame()">TAP TO START</button>
 </div>
 
-<script src="./three.min.js"></script>
+<script src="./three.min.js" onerror="document.getElementById('start').textContent='⚠ 3D engine failed to load. Refresh page.';"></script>
 <script>
+// ═══════════════════════════════════════════════════════
+//  GLOBAL ERROR HANDLER — shows errors on button so we can debug
+// ═══════════════════════════════════════════════════════
+window.onerror = function(msg, src, line, col, err) {
+  var btn = document.getElementById('start');
+  if (btn) {
+    btn.textContent = '⚠ JS Error — tap to see';
+    btn.onclick = function() { alert('Error: ' + msg + '\nLine: ' + line + '\n\n' + (err && err.stack ? err.stack : '')); };
+  }
+};
+
 // ═══════════════════════════════════════════════════════
 //  INTRO SETUP
 // ═══════════════════════════════════════════════════════
@@ -451,12 +462,20 @@ canvas#c{position:fixed;inset:0;display:block}
 //  THREE.JS SCENE
 // ═══════════════════════════════════════════════════════
 const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+} catch(e) {
+  try { renderer = new THREE.WebGLRenderer({ canvas }); } catch(e2) {
+    document.getElementById('start').textContent = '⚠ WebGL not supported on this device';
+    throw e2;
+  }
+}
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputEncoding = THREE.sRGBEncoding;
+if (THREE.sRGBEncoding !== undefined) renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 
@@ -1084,24 +1103,39 @@ function loop(){
 })();
 
 // ── Start ─────────────────────────────────────────────
-function startGame(){
+window.__startGame = function startGame(){
+  if(gameStarted)return;
   document.getElementById('intro').style.transition='opacity .5s';
   document.getElementById('intro').style.opacity='0';
-  setTimeout(()=>document.getElementById('intro').style.display='none',500);
+  setTimeout(()=>{
+    var intro=document.getElementById('intro');
+    if(intro)intro.style.display='none';
+  },500);
   gameStarted=true;clock.start();
   camPos.set(busPos.x-Math.sin(busAngle)*19,8.5,busPos.z-Math.cos(busAngle)*19);
   camTarget.copy(busPos);
   toast('🚌 Drive to Stop A!');
+};
+
+document.getElementById('start').addEventListener('click', window.__startGame);
+document.getElementById('intro').addEventListener('touchend',function(e){
+  var el=e.target;
+  do{
+    if(el&&el.id==='start'){window.__startGame();return;}
+    el=el&&el.parentElement;
+  }while(el&&el.id!=='intro');
+  if(e.target&&e.target.id==='intro')window.__startGame();
+},{passive:true});
+
+try{
+  buildWorld();buildBus();buildStops();
+  busGroup.position.copy(busPos);
+  loop();
+}catch(e){
+  document.getElementById('start').textContent='⚠ Scene error — tap to see';
+  document.getElementById('start').onclick=function(){alert(e&&(e.stack||e.message));};
+  console.error('Scene init error:',e);
 }
-
-document.getElementById('start').addEventListener('click',startGame);
-document.getElementById('intro').addEventListener('touchend',e=>{
-  if(e.target===document.getElementById('start')||e.target===document.getElementById('intro'))startGame();
-});
-
-buildWorld();buildBus();buildStops();
-busGroup.position.copy(busPos);
-loop();
 </script>
 </body>
 </html>
