@@ -1,20 +1,14 @@
 {
   "version": 2,
-  "name": "busrush",
-  "buildCommand": null,
+  "name": "bus-rush-3d",
+  "buildCommand": "echo 'Static site - no build required'",
   "outputDirectory": ".",
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
+  "installCommand": "echo 'No install needed'",
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" }
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
       ]
     }
   ]
