@@ -958,6 +958,105 @@ class CameraSystem {
 }
 
 /* ============================================================
+   MINI MAP
+   ============================================================ */
+class MiniMap {
+  constructor() {
+    this.canvas  = document.getElementById('minimap');
+    if (!this.canvas) return;
+    this.SIZE    = 150;
+    this.canvas.width  = this.SIZE;
+    this.canvas.height = this.SIZE;
+    this.ctx     = this.canvas.getContext('2d');
+    // world half-extent (CITY_HALF + small margin)
+    this.HALF    = CITY_HALF + 20;
+    this._stopColors = ['#f6c90e','#3ec9a7','#ff6b6b','#a78bfa','#38bdf8'];
+  }
+
+  _w(v) { return (v / this.HALF) * (this.SIZE / 2) + this.SIZE / 2; }
+
+  draw(busPos, busAngle, traffic, passengers) {
+    if (!this.ctx) return;
+    const ctx  = this.ctx;
+    const S    = this.SIZE;
+
+    ctx.clearRect(0, 0, S, S);
+
+    // Background
+    ctx.fillStyle = 'rgba(8,10,24,0.88)';
+    ctx.beginPath();
+    ctx.roundRect(0, 0, S, S, 10);
+    ctx.fill();
+
+    // City boundary
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    const b0 = this._w(-CITY_HALF), b1 = this._w(CITY_HALF);
+    ctx.strokeRect(b0, b0, b1 - b0, b1 - b0);
+
+    // Road grid — horizontal & vertical lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i <= CITY_GRID; i++) {
+      const coord = -CITY_HALF + i * CELL_SIZE;
+      const p = this._w(coord);
+      ctx.beginPath(); ctx.moveTo(p, this._w(-CITY_HALF)); ctx.lineTo(p, this._w(CITY_HALF)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(this._w(-CITY_HALF), p); ctx.lineTo(this._w(CITY_HALF), p); ctx.stroke();
+    }
+
+    // Traffic cars
+    if (traffic) {
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      for (const car of traffic.cars) {
+        const cx = this._w(car.group.position.x);
+        const cy = this._w(car.group.position.z);
+        ctx.beginPath();
+        ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Bus stops
+    BUS_STOPS.forEach((stop, i) => {
+      const sx = this._w(stop.pos.x);
+      const sy = this._w(stop.pos.z);
+      ctx.beginPath();
+      ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+      ctx.fillStyle = this._stopColors[i % this._stopColors.length];
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // Player bus — orange arrow
+    const bx = this._w(busPos.x);
+    const by = this._w(busPos.z);
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(busAngle);
+    ctx.beginPath();
+    ctx.moveTo(0, -7);
+    ctx.lineTo(4, 5);
+    ctx.lineTo(0, 2);
+    ctx.lineTo(-4, 5);
+    ctx.closePath();
+    ctx.fillStyle = '#FF6B00';
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Compass "N" label
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('N', S / 2, 12);
+  }
+}
+
+/* ============================================================
    HUD UPDATER
    ============================================================ */
 function showHint(msg) {
@@ -1077,6 +1176,7 @@ class BusRushGame {
       ['Preparing controls...', ()=> {
         this.controls = new Controls(this.save.data.settings.sensitivity);
         this.camSys   = new CameraSystem(this.camera);
+        this.miniMap  = new MiniMap();
         this._setupUI();
         this._applyQuality(this.save.data.settings.quality);
       }],
@@ -1249,6 +1349,7 @@ class BusRushGame {
 
       this.camSys.update(this.bus, dt);
       updateHUD(this.bus, this.passengers, this.career, this.weather, this.controls);
+      if (this.miniMap) this.miniMap.draw(this.bus.pos, this.bus.group.rotation.y, this.traffic, this.passengers);
 
       this.scene.fog.far = this.weather.raining ? 130 : (this.renderer.getPixelRatio() === 1 ? 180 : 320);
 
