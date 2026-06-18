@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0a0a1a" />
+  <title>BusRush – City Driver</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+
+<!-- Game Canvas -->
+<canvas id="game-canvas"></canvas>
+
+<!-- ====================================================
+     MAIN MENU
+     ==================================================== -->
+<div id="screen-menu" class="screen active">
+  <div class="menu-overlay"></div>
+  <div class="menu-content">
+    <div class="game-logo">
+      <div class="logo-bus">🚌</div>
+      <h1 class="logo-title">BusRush</h1>
+      <p class="logo-sub">City Driver Simulator</p>
+    </div>
+
+    <div class="menu-stats-bar">
+      <div class="stat-chip"><span class="stat-icon">💰</span><span id="menu-money">$500</span></div>
+      <div class="stat-chip"><span class="stat-icon">⭐</span><span id="menu-level">Level 1</span></div>
+    </div>
+
+    <nav class="menu-nav">
+      <button id="btn-play" class="menu-btn primary">
+        <span class="btn-icon">▶</span>
+        <span>Play</span>
+      </button>
+      <button id="btn-continue" class="menu-btn secondary">
+        <span class="btn-icon">↩</span>
+        <span>Continue</span>
+      </button>
+      <div class="menu-row">
+        <button id="btn-garage" class="menu-btn small">
+          <span>🔧</span><span>Garage</span>
+        </button>
+        <button id="btn-routes" class="menu-btn small">
+          <span>🗺️</span><span>Routes</span>
+        </button>
+        <button id="btn-settings" class="menu-btn small">
+          <span>⚙️</span><span>Settings</span>
+        </button>
+      </div>
+    </nav>
+
+    <p class="menu-footer">Drive. Earn. Level up.</p>
+  </div>
+</div>
+
+<!-- ====================================================
+     HUD (In-Game)
+     ==================================================== -->
+<div id="screen-hud" class="screen" style="display:none; background:none; pointer-events:none;">
+
+  <!-- Top HUD -->
+  <div class="hud-top">
+    <div class="hud-panel hud-left">
+      <div class="hud-speed-wrap">
+        <span id="hud-speed" class="hud-speed">0</span>
+        <span class="hud-speed-unit">km/h</span>
+      </div>
+      <div class="hud-gear-wrap">
+        <span class="hud-label">GEAR</span>
+        <span id="hud-gear" class="hud-gear">D</span>
+      </div>
+    </div>
+
+    <div class="hud-panel hud-center">
+      <div id="hud-destination" class="hud-destination">Find passengers</div>
+      <div class="hud-meta">
+        <span id="hud-time" class="hud-time">12:00 PM</span>
+        <span id="hud-weather" class="hud-weather">☀️</span>
+      </div>
+    </div>
+
+    <div class="hud-panel hud-right">
+      <div class="hud-money-wrap">
+        <span class="hud-label">EARNINGS</span>
+        <span id="hud-money" class="hud-money">$500</span>
+      </div>
+      <div class="hud-passenger-wrap">
+        <span class="hud-label">PAX</span>
+        <span id="hud-passengers" class="hud-passengers">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- XP / Level bar -->
+  <div class="hud-xp-wrap">
+    <span class="hud-xp-label">Lv.<span id="hud-level">1</span></span>
+    <div class="hud-xp-track">
+      <div id="hud-xp-bar" class="hud-xp-bar"></div>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div id="notification" class="notification"></div>
+
+  <!-- Game Controls (touch) -->
+  <div id="game-controls" class="game-controls" style="pointer-events:all;">
+
+    <!-- Left: Steering wheel -->
+    <div class="controls-left">
+      <div id="steering-wheel" class="steering-wheel">
+        <div class="wheel-inner">
+          <div class="wheel-spoke h"></div>
+          <div class="wheel-spoke v"></div>
+          <div class="wheel-hub"></div>
+        </div>
+      </div>
+      <div class="controls-hint">STEER</div>
+    </div>
+
+    <!-- Right: Pedals + buttons -->
+    <div class="controls-right">
+      <div class="controls-top-row">
+        <button id="btn-reverse" class="ctrl-btn reverse-btn">⟳ REV</button>
+        <button id="btn-camera" class="ctrl-btn cam-btn">📷</button>
+        <button id="btn-pause" class="ctrl-btn pause-btn">⏸</button>
+      </div>
+      <div class="pedal-row">
+        <button id="btn-brake" class="ctrl-btn pedal-btn brake-btn">
+          <span class="pedal-icon">⬛</span>
+          <span class="pedal-label">BRAKE</span>
+        </button>
+        <button id="btn-gas" class="ctrl-btn pedal-btn gas-btn">
+          <span class="pedal-icon">▶▶</span>
+          <span class="pedal-label">GAS</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Weather toggle -->
+    <button id="btn-weather" class="ctrl-btn weather-btn">☀️</button>
+  </div>
+
+  <!-- Bus stop proximity indicator -->
+  <div id="stop-indicator" class="stop-indicator" style="display:none;">
+    <div class="stop-icon">🚏</div>
+    <div class="stop-text">BUS STOP<br>STOP TO BOARD</div>
+  </div>
+</div>
+
+<!-- ====================================================
+     PAUSE MENU
+     ==================================================== -->
+<div id="screen-pause" class="screen" style="display:none;">
+  <div class="overlay-blur"></div>
+  <div class="panel pause-panel">
+    <h2 class="panel-title">Paused</h2>
+    <div class="pause-stats">
+      <div class="pause-stat">
+        <span class="ps-label">Earnings This Run</span>
+        <span id="pause-earnings" class="ps-value">$0</span>
+      </div>
+      <div class="pause-stat">
+        <span class="ps-label">Passengers</span>
+        <span id="pause-passengers" class="ps-value">0</span>
+      </div>
+    </div>
+    <button id="btn-resume" class="menu-btn primary">Resume</button>
+    <button id="btn-to-menu" class="menu-btn secondary">Main Menu</button>
+  </div>
+</div>
+
+<!-- ====================================================
+     GARAGE
+     ==================================================== -->
+<div id="screen-garage" class="screen" style="display:none;">
+  <div class="overlay-blur"></div>
+  <div class="panel garage-panel">
+    <button class="btn-back btn-icon-back">← Back</button>
+    <h2 class="panel-title">🔧 Garage</h2>
+
+    <div class="garage-bus-preview">🚌</div>
+
+    <div class="garage-stats">
+      <div class="garage-stat-card">
+        <div class="gsc-label">Driver Level</div>
+        <div id="garage-level" class="gsc-value">1</div>
+      </div>
+      <div class="garage-stat-card">
+        <div class="gsc-label">Balance</div>
+        <div id="garage-money" class="gsc-value">$500</div>
+      </div>
+      <div class="garage-stat-card">
+        <div class="gsc-label">Total Passengers</div>
+        <div id="garage-passengers" class="gsc-value">0</div>
+      </div>
+    </div>
+
+    <div class="xp-section">
+      <div class="xp-label-row">
+        <span>Experience</span>
+        <span id="garage-xp">0 / 500 XP</span>
+      </div>
+      <div class="xp-track">
+        <div id="xp-bar" class="xp-fill"></div>
+      </div>
+    </div>
+
+    <div class="bus-specs">
+      <h3>Bus Specifications</h3>
+      <div class="spec-grid">
+        <div class="spec-item"><span class="spec-label">Top Speed</span><span class="spec-val">90 km/h</span></div>
+        <div class="spec-item"><span class="spec-label">Capacity</span><span class="spec-val">30 passengers</span></div>
+        <div class="spec-item"><span class="spec-label">Engine</span><span class="spec-val">Diesel V8</span></div>
+        <div class="spec-item"><span class="spec-label">Brakes</span><span class="spec-val">Air Disc</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     ROUTES
+     ==================================================== -->
+<div id="screen-routes" class="screen" style="display:none;">
+  <div class="overlay-blur"></div>
+  <div class="panel routes-panel">
+    <button class="btn-back btn-icon-back">← Back</button>
+    <h2 class="panel-title">🗺️ Routes</h2>
+    <div id="routes-list" class="routes-list"></div>
+  </div>
+</div>
+
+<!-- ====================================================
+     SETTINGS
+     ==================================================== -->
+<div id="screen-settings" class="screen" style="display:none;">
+  <div class="overlay-blur"></div>
+  <div class="panel settings-panel">
+    <button class="btn-back btn-icon-back">← Back</button>
+    <h2 class="panel-title">⚙️ Settings</h2>
+
+    <div class="settings-list">
+      <div class="setting-row">
+        <label class="setting-label">Graphics Quality</label>
+        <select id="setting-quality" class="setting-select">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <label class="setting-label">Sound Effects</label>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="setting-sound" checked />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="setting-label">Music</label>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="setting-music" checked />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="setting-label">Steering Sensitivity</label>
+        <input type="range" id="setting-sensitivity" min="0.5" max="2" step="0.1" value="1" class="setting-slider" />
+      </div>
+
+      <div class="setting-row">
+        <label class="setting-label">Controls Layout</label>
+        <select id="setting-layout" class="setting-select">
+          <option value="default">Default</option>
+          <option value="left">Left-Handed</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="btn-reset-save" class="menu-btn danger" onclick="if(confirm('Reset all progress?')){localStorage.removeItem('busrush_save');location.reload();}">Reset Progress</button>
+  </div>
+</div>
+
+<!-- ====================================================
+     LOADING SCREEN
+     ==================================================== -->
+<div id="screen-loading" class="screen active" style="z-index:9999;">
+  <div class="loading-content">
+    <div class="loading-bus">🚌</div>
+    <h1 class="loading-title">BusRush</h1>
+    <div class="loading-bar-wrap">
+      <div id="loading-bar" class="loading-bar"></div>
+    </div>
+    <p id="loading-text" class="loading-text">Loading city...</p>
+  </div>
+</div>
+
+<script type="module" src="js/game.js"></script>
+</body>
+</html>
