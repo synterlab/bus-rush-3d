@@ -459,7 +459,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
-renderer.physicallyCorrectLights = true;
+
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x8bbdd9, 0.0075);
@@ -843,8 +843,12 @@ function updatePtls(dt){
 // ── Bus Stops ─────────────────────────────────────────
 const stopNames=['A','B','C','D','E','F'];
 const stopPositions=[
-  new THREE.Vector3(0,0,60),new THREE.Vector3(60,0,10),new THREE.Vector3(55,0,-60),
-  new THREE.Vector3(-5,0,-65),new THREE.Vector3(-60,0,-10),new THREE.Vector3(-60,0,55),
+  new THREE.Vector3(-37.5,0,45),
+  new THREE.Vector3(45,0,17.5),
+  new THREE.Vector3(17.5,0,-65),
+  new THREE.Vector3(-65,0,-37.5),
+  new THREE.Vector3(-37.5,0,-10),
+  new THREE.Vector3(-10,0,67.5),
 ];
 const stops=[];
 
@@ -928,7 +932,7 @@ function updateBeacons(){
 }
 
 // ── Physics State ─────────────────────────────────────
-let busPos=new THREE.Vector3(0,0,60);
+let busPos=new THREE.Vector3(17.5,0,45);
 let busAngle=0,busSpeed=0;
 const MAX_SPEED=22,ACCEL=14,FRICTION=8,BRAKE_F=22,STEER_RATE=1.8,BUS_R=4.8,WORLD_B=92;
 const camPos=new THREE.Vector3(),camTarget=new THREE.Vector3();
@@ -968,7 +972,7 @@ function updateBus(dt){
   }
   busPos.set(nx,0,nz);
   busGroup.position.set(busPos.x,Math.sin(gt*8)*Math.abs(busSpeed)*.003,busPos.z);
-  busGroup.rotation.y=-busAngle;
+  busGroup.rotation.y=Math.PI-busAngle;
   bus.children.forEach(c=>{if(c.geometry?.type==='CylinderGeometry'&&c.position.y<1)c.rotation.x+=busSpeed*dt*1.4;});
 }
 
