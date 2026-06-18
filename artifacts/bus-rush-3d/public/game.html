@@ -404,7 +404,7 @@ canvas#c{position:fixed;inset:0;display:block}
   <button class="start-btn" id="start">TAP TO START</button>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="./three.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════
 //  INTRO SETUP
@@ -578,9 +578,9 @@ scene.add(Object.assign(new THREE.DirectionalLight(0x4488ff,.35),{position:new T
     const y=pos.getY(i),t=Math.max(0,Math.min(1,(y+280)/560));
     const horizon=t<0.15;
     colors.push(
-      horizon?.68+t*.1:.38+t*.12,
-      horizon?.78+t*.05:.62+t*.16,
-      horizon?.88-.05*t:.86-.06*t
+      horizon ? .68+t*.1 : .38+t*.12,
+      horizon ? .78+t*.05 : .62+t*.16,
+      horizon ? .88-.05*t : .86-.06*t
     );
   }
   geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
