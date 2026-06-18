@@ -939,36 +939,6 @@ let gt=0,gameStarted=false;
 
 // ── Controls ──────────────────────────────────────────
 const keys={gas:false,brake:false,left:false,right:false};
-function initControls(){
-  ({bl:'left',br:'right',bg:'gas',bb:'brake'} |> Object.entries).forEach(([id,k])=>{
-  // Safari compat
-  try{
-    const map={bl:'left',br:'right',bg:'gas',bb:'brake'};
-    Object.entries(map).forEach(([id,k])=>{
-      const el=document.getElementById(id);
-      const on=e=>{e.preventDefault();keys[k]=true;el.classList.add('p')};
-      const off=e=>{e.preventDefault();keys[k]=false;el.classList.remove('p')};
-      el.addEventListener('touchstart',on,{passive:false});
-      el.addEventListener('touchend',off,{passive:false});
-      el.addEventListener('touchcancel',off,{passive:false});
-      el.addEventListener('mousedown',on);el.addEventListener('mouseup',off);el.addEventListener('mouseleave',off);
-    });
-  }catch(e){}
-  });
-  window.addEventListener('keydown',e=>{
-    if(e.code==='ArrowUp'||e.code==='KeyW')keys.gas=true;
-    if(e.code==='ArrowDown'||e.code==='KeyS')keys.brake=true;
-    if(e.code==='ArrowLeft'||e.code==='KeyA')keys.left=true;
-    if(e.code==='ArrowRight'||e.code==='KeyD')keys.right=true;
-  });
-  window.addEventListener('keyup',e=>{
-    if(e.code==='ArrowUp'||e.code==='KeyW')keys.gas=false;
-    if(e.code==='ArrowDown'||e.code==='KeyS')keys.brake=false;
-    if(e.code==='ArrowLeft'||e.code==='KeyA')keys.left=false;
-    if(e.code==='ArrowRight'||e.code==='KeyD')keys.right=false;
-  });
-  document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
-}
 
 // ── Update ────────────────────────────────────────────
 function updateBus(dt){
